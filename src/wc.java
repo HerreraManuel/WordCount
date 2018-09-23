@@ -5,7 +5,13 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+
 public class wc {
+
+
+    static void err (char errInput) throws IOException {
+        throw new IOException("wc: invalid option --" + errInput);
+    }
 
     // No file, prints instructions
     private static void usage() {
@@ -17,9 +23,33 @@ public class wc {
     }
 
     // Determine user request
-    public static void userInput() {
+    public static void userInput(String args) throws IOException{
 
+        int charPos = 0;
+        int lines = 0, words = 0, characters = 0;
+        if (args.charAt(0) != '-')
+            read(args);
+        else {
+            while (charPos < args.length()) {
+                switch (args.charAt(charPos)) {
+                    case 'w':
+                        words++;
+                        break;
+                    case 'c':
+                        characters++;
+                        break;
+                    case 'l':
+                        lines++;
+                        break;
+                    default:
+
+                        break;
+                }
+                charPos++;
+            }
+        }
     }
+
 
     // Read the file. Includes lineCount, wordCount, characterCount
     private static void read(String fileName) {
@@ -47,33 +77,12 @@ public class wc {
     }
 
 
-    public static void main(String[] args) {
-
-        if (args.length <= 0)
+    public static void main(String[] args) throws Exception{
+        if (args.length < 1)
             usage();
         else {
-            String statsRequested = args[0];
-            switch (statsRequested) {
-                case "-l":
-                    System.out.println("line count");
-                    break;
-                case "-c":
-                    System.out.println("character count");
-                    break;
-                case "-w":
-                    System.out.println("word count");
-
-            }
-
-            // Checking to see if any file was inserted.
-           // read("C:\\Users\\mherr\\Desktop\\Java HW\\WordCount\\src\\random.txt");
-        /*if (args.length > 0) {
-            //System.out.println(lineCount(args[0]));
-            System.out.println(wordCount("C:\\Users\\mherr\\Desktop\\Java HW\\WordCount\\src\\random.py"));
+            userInput(args[0]);
         }
-        else {
-            usage();
-        }*/
-        }
+
     }
 }
