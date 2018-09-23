@@ -1,10 +1,10 @@
-/* Manuel Herrera */
+/* Manuel Herrera
+ * Fall 2018 */
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-
 
 public class wc {
 
@@ -22,58 +22,69 @@ public class wc {
                 "wc <filename> will print all the above");
     }
 
-    // Determine user request
-    public static void userInput(String args) throws IOException{
-
-        int charPos = 0;
-        int lines = 0, words = 0, characters = 0;
-        if (args.charAt(0) != '-')
-            read(args);
-        else {
-            while (charPos < args.length()) {
-                switch (args.charAt(charPos)) {
-                    case 'w':
-                        words++;
-                        break;
-                    case 'c':
-                        characters++;
-                        break;
-                    case 'l':
-                        lines++;
-                        break;
-                    default:
-
-                        break;
-                }
-                charPos++;
-            }
-        }
-    }
 
 
     // Read the file. Includes lineCount, wordCount, characterCount
-    private static void read(String fileName) {
-        int lineCounter = 0, wordCounter = 0, characterCount = 0;
-        File currentFile = new File(fileName);
+    private static void read(String[] args, int lines, int words, int characters) throws IOException {
         try {
-            String line;
-            String[] lineHolder;
-            BufferedReader reader = new BufferedReader(new FileReader(fileName));
-            while ((line = reader.readLine()) != null) {
-                lineHolder = line.replaceAll("\\s+", " ").split(" ");
-                for (String singleWord : lineHolder) {
-                    characterCount += singleWord.length();
-                    if (!singleWord.isEmpty())
-                        wordCounter++;
+         // String[] filePaths = args.copyOfRange(args, 1, args.length);
+            for (String currentFile : args) {
+                BufferedReader lineReader = new BufferedReader(new FileReader(currentFile));
+                BufferedReader wordReader = new BufferedReader(new FileReader(currentFile));
+                BufferedReader charReader = new BufferedReader(new FileReader(currentFile));
+                File onFile = new File(currentFile);
+                if (lines == 0 && words == 0 && characters == 0){
+                    System.out.println(lineCount(lineReader) + " " + wordCount(wordReader)
+                            + " " + charCount(charReader) + " " + onFile.getName());
                 }
-                lineCounter++;
-            }
-            System.out.println(lineCounter);
-            System.out.println(wordCounter);
-            System.out.println(characterCount);
+                if (lines == 1) {
+                    System.out.println(lineCount(lineReader) + " " + onFile.getName());
+                }
+                if (words == 1) {
+                    System.out.println(wordCount(lineReader) + " " + onFile.getName());
+                }
+                if (characters == 1) {
+                    System.out.println(charCount(lineReader) + " " + onFile.getName());
+                }
+
+         }
         } catch (IOException e) {
-            e.printStackTrace();
+                 e.printStackTrace();
+            }
+}
+
+    public static int lineCount (BufferedReader singleFile) throws IOException{
+        String line;
+        int numOfLines = 0;
+        while((line = singleFile.readLine()) != null ){
+            numOfLines++;
         }
+        return numOfLines;
+    }
+
+    public static int wordCount (BufferedReader singleFile) throws IOException{
+        int numOfWords = 0;
+        String line;
+        String[] lineHolder;
+        while ((line = singleFile.readLine()) != null) {
+            lineHolder = line.replaceAll("\\s+", " ").split(" ");
+            for (String singleWord : lineHolder)
+                if (!singleWord.isEmpty()) numOfWords++;
+        }
+        return numOfWords;
+    }
+
+    public static int charCount (BufferedReader singleFile) throws IOException {
+        int numOfChar = 0;
+        String line;
+        String[] lineHolder;
+        while((line = singleFile.readLine()) != null) {
+            lineHolder = line.replaceAll("\\s+", " ").split(" ");
+            for (String singleWord: lineHolder) {
+                numOfChar += singleWord.length();
+            }
+        }
+        return numOfChar;
     }
 
 
@@ -81,7 +92,30 @@ public class wc {
         if (args.length < 1)
             usage();
         else {
-            userInput(args[0]);
+            int charPos = 0;
+            int lines = 0, words = 0, characters = 0;
+            if (args[0].charAt(0) != '-')
+                read(args, lines, words, characters);
+            else {
+                while (charPos < args[0].length()) {
+                    switch (args[0].charAt(charPos)) {
+                        case 'w':
+                            words++;
+                            break;
+                        case 'c':
+                            characters++;
+                            break;
+                        case 'l':
+                            lines++;
+                            break;
+                        default:
+
+                            break;
+                    }
+                    charPos++;
+                }
+                read(args, lines, words, characters);
+            }
         }
 
     }
