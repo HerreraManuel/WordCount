@@ -8,7 +8,15 @@ import java.io.IOException;
 
 
 public class wc {
+    private int totalLines;
+    private int totalWords;
+    private int totalChars;
 
+    private wc() {
+        totalLines = 0;
+        totalWords = 0;
+        totalChars = 0;
+    }
 
     static void err (char errInput) throws IOException {
         throw new IOException("wc: invalid option --" + errInput);
@@ -23,10 +31,8 @@ public class wc {
                 "wc <filename> will print all the above");
     }
 
-
-
-    // Read the file. Includes lineCount, wordCount, characterCount
-    private static void read(String[] args, int lines, int words, int characters) throws IOException {
+    // Read the file(s).
+    public void read(String[] args, int lines, int words, int characters) throws IOException {
         String[] filePaths = new String[args.length - 1];
         for (int i = 0; i < args.length - 1; i++)
             filePaths[i] = args[i + 1];
@@ -39,32 +45,34 @@ public class wc {
                 if (lines == 0 && words == 0 && characters == 0){
                     System.out.println(lineCount(lineReader) + " " + wordCount(wordReader)
                             + " " + charCount(charReader) + " " + onFile.getName());
+                    lines = 1;
+                    words = 1;
+                    characters = 1;
                 }
-                if (lines == 1) {
-                    System.out.println(lineCount(lineReader) + " " + onFile.getName());
-                }
-                if (words == 1) {
-                    System.out.println(wordCount(lineReader) + " " + onFile.getName());
-                }
-                if (characters == 1) {
-                    System.out.println(charCount(lineReader) + " " + onFile.getName());
+                else {
+                    if (lines == 1) System.out.print(lineCount(lineReader) + " ");
+                    if (words == 1) System.out.print(wordCount(wordReader) + " ");
+                    if (characters == 1) System.out.print(charCount(charReader) + " ");
+                    System.out.print(onFile.getName() + "\n");
                 }
              }
+            printTotals(lines, words, characters);
         } catch (IOException e) {
                  e.printStackTrace();
             }
 }
 
-    public static int lineCount (BufferedReader singleFile) throws IOException{
+    public int lineCount (BufferedReader singleFile) throws IOException{
         String line;
         int numOfLines = 0;
         while((line = singleFile.readLine()) != null ){
             numOfLines++;
         }
+        totalLines += numOfLines;
         return numOfLines;
     }
 
-    public static int wordCount (BufferedReader singleFile) throws IOException{
+    public int wordCount (BufferedReader singleFile) throws IOException{
         int numOfWords = 0;
         String line;
         String[] lineHolder;
@@ -73,10 +81,11 @@ public class wc {
             for (String singleWord : lineHolder)
                 if (!singleWord.isEmpty()) numOfWords++;
         }
+        totalWords += numOfWords;
         return numOfWords;
     }
 
-    public static int charCount (BufferedReader singleFile) throws IOException {
+    public int charCount (BufferedReader singleFile) throws IOException {
         int numOfChar = 0;
         String line;
         String[] lineHolder;
@@ -86,18 +95,27 @@ public class wc {
                 numOfChar += singleWord.length();
             }
         }
+        totalChars += numOfChar;
         return numOfChar;
     }
 
+    private void printTotals(int lines, int words, int characters) {
+        String finalLine = new String();
+        if (lines == 1) finalLine += totalLines + " ";
+        if (words == 1) finalLine += totalWords + " ";
+        if (characters == 1) finalLine += totalChars + " ";
+        System.out.println(finalLine + " total");
+    }
 
-    public static void main(String[] args) throws Exception{
+
+    public static void main(String[] args) throws IOException{
         if (args.length < 1)
             usage();
         else {
-            int charPos = 0;
+            int charPos = 1;
             int lines = 0, words = 0, characters = 0;
-            if (args[0].charAt(0) != '-')
-                read(args, lines, words, characters);
+            wc filesToBeRead = new wc();
+            if (args[0].charAt(0) != '-') filesToBeRead.read(args, lines, words, characters);
             else {
                 while (charPos < args[0].length()) {
                     switch (args[0].charAt(charPos)) {
@@ -110,13 +128,14 @@ public class wc {
                         case 'l':
                             lines++;
                             break;
-                        default:
-
-                            break;
+                        default :
+                            err (args[0].charAt(1));
+                            System.exit(0);
                     }
                     charPos++;
                 }
-                read(args, lines, words, characters);
+                // send triggers to retrieve correct stats.
+                filesToBeRead.read(args, lines, words, characters);
             }
         }
 
