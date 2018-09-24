@@ -1,6 +1,14 @@
 /* Manuel Herrera
  * Fall 2018 */
 
+/*
+Counting and file reading methods obtained from:
+www.vogella.com/tutorials/JavaIO/article.html
+https://stackoverflow.com/questions/4094119/counting-number-of-words-in-a-file
+https://stackoverflow.com/questions/16802147/java-i-want-to-read-a-file-name-from-command-line-then-use-a-bufferedreader-to
+ */
+
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -18,6 +26,7 @@ public class wc {
         totalChars = 0;
     }
 
+    // invalid stat request.
     static void err (char errInput) throws IOException {
         throw new IOException("wc: invalid option --" + errInput);
     }
