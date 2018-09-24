@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+
 public class wc {
 
 
@@ -26,9 +27,11 @@ public class wc {
 
     // Read the file. Includes lineCount, wordCount, characterCount
     private static void read(String[] args, int lines, int words, int characters) throws IOException {
+        String[] filePaths = new String[args.length - 1];
+        for (int i = 0; i < args.length - 1; i++)
+            filePaths[i] = args[i + 1];
         try {
-         // String[] filePaths = args.copyOfRange(args, 1, args.length);
-            for (String currentFile : args) {
+            for (String currentFile : filePaths) {
                 BufferedReader lineReader = new BufferedReader(new FileReader(currentFile));
                 BufferedReader wordReader = new BufferedReader(new FileReader(currentFile));
                 BufferedReader charReader = new BufferedReader(new FileReader(currentFile));
@@ -46,8 +49,7 @@ public class wc {
                 if (characters == 1) {
                     System.out.println(charCount(lineReader) + " " + onFile.getName());
                 }
-
-         }
+             }
         } catch (IOException e) {
                  e.printStackTrace();
             }
