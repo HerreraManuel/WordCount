@@ -42,12 +42,13 @@ public class Metrics {
 
     public void run(List<File> inFiles) throws Exception {
         try {
+            if (inFiles.size() > 1) printHeader(lineStat, wordStat, charStat, srcLnStat, cmtStat);
             for (File temp : inFiles) {
                 lineCount(temp);
                 wordAndCharCount(temp);
                 getExtension(temp);
             }
-            System.out.println("Line Count = " + numLines);
+            System.out.println("\nLine Count = " + numLines);
             System.out.println("Word Count = " + numWords);
             System.out.println("Char Count = " + numChars);
             System.out.println("File Ext = " + fileExt);
@@ -78,7 +79,16 @@ public class Metrics {
 
     public void printHeader(boolean lineStat, boolean wordStat, boolean charStat,
                             boolean srcLnStat, boolean cmtStat){
-       // if (files.size() == 1)
+            if (lineStat) System.out.printf("%-10s", "Lines");
+            if (wordStat) System.out.printf("%-10s", "Words");
+            if (charStat) System.out.printf("%-10s", "Chars");
+            if (cmtStat) System.out.printf("%-10s", "Cmmts");
+            if (srcLnStat) System.out.printf("%-10s", "SrcLines");
+            System.out.printf("%8s", "File");
+    }
+
+    public void printStats(){
+
     }
 
     //Currently set for simple test
