@@ -8,9 +8,14 @@ www.vogella.com/tutorials/JavaIO/article.html
 https://stackoverflow.com/questions/4094119/counting-number-of-words-in-a-file
 https://stackoverflow.com/questions/16802147/java-i-want-to-read-a-file-name-from-command-line-then-use-a-bufferedreader-to
 
-Counting comments implementation by"
+Counting comments implementation
 https://gist.github.com/shiva27/1432290
+
+Source Lines of Code determined by
+"A SLOC Counting Standard." (2007)
+by Nguyen, Vu, Sophia Deeds-Rubin, Thomas Tan and B. Bohm
  */
+
 
 
 import picocli.CommandLine.*;
@@ -21,12 +26,8 @@ import java.io.IOException;
 import java.util.List;
 
 
-@Command(name = "Metrics", footer = "\nCSC131: Individual Project - Sprint 2. Design document available.", description =
-        "If no option is declared, prints lines, words, character, comment lines, source line counts for each" +
-                "FILE, and a total line if more than one FILE is specified. Otherwise, prints specified request for FILE(s).\n" +
-                "\"Source lines of code\" is determined on the [author & journal].\n", sortOptions = false)
 
-class CodeReader extends Metrics {
+class CodeReader{
     public long numOfCmts;
     public long numOfSrcLns;
     public long totalCmts;
@@ -34,7 +35,6 @@ class CodeReader extends Metrics {
 
     public void readLines(File inFile) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(inFile));
-        int count = 0;
         boolean commentStart = true;
         String currLine = null;
         while ((currLine = reader.readLine()) != null) {
@@ -47,13 +47,13 @@ class CodeReader extends Metrics {
                 }
             }
             if (commentStart(currLine)) { commentStart = true;            }
+            if (isSourceCodeLine(currLine)) numOfSrcLns++;
         }
     }
 
     public boolean commentStart(String line){
         int index = line.indexOf("/*");
         if (index < 0) return false;
-        int startIndex = line.indexOf("\"");
         return !commentEnd(line.substring((index + 2)));
     }
 
@@ -62,19 +62,54 @@ class CodeReader extends Metrics {
         if (index < 0) return false;
         else{
             String subString = line.substring(index).trim();
-            if ("".equals(subString) || subString.startsWith("//")) {numOfCmts++; return true;}
+            if (subString.startsWith("//")) {numOfCmts++; return true;}
             if (commentStart(subString)) return false;
             else {numOfCmts++; return true;}
         }
     }
+
+    public boolean isSourceCodeLine(String lineOfCode){
+        boolean isSourceCode = false;
+        if ("".equals(lineOfCode) || lineOfCode.startsWith("//")) return isSourceCode;
+        int index = lineOfCode.indexOf("/*");
+        if (index != 0) return true;
+        else {
+            while (lineOfCode.length() > 0) {
+                lineOfCode = lineOfCode.substring(index + 2);
+                int endOfComment = lineOfCode.indexOf("*/");
+                        if (endOfComment < 0) return false;
+                        if (endOfComment == lineOfCode.length() - 2) return false;
+                        else {
+                            String substring = lineOfCode.substring(endOfComment + 2).trim();
+                            if ("".equals(substring) || substring.indexOf("//") == 0) return false;
+                            else {
+                                if (substring.startsWith("/*")) { lineOfCode = substring; continue;}
+                                return true;
+                            }
+                        }
+            }
+        }
+        return isSourceCode;
+    }
+
+    public void setNumOfCmts(long newNum) { this.numOfCmts = newNum;}
+
+    public void setNumOfSrcLngs(long newNum) { this.numOfSrcLns = newNum;}
+
+    public long getNumOfCmts() { return numOfCmts;}
+
+    public long getNumOfSrcLns() { return numOfSrcLns;}
 }
+@Command(name = "Metrics", footer = "\nCSC131: Individual Project - Sprint 2. Design document available.", description =
+        "\nIf no option is declared, prints lines, words, character, comment lines, source line counts for each " +
+                "FILE, and a total line if more than one FILE is specified. Otherwise, prints specified request for FILE(s).\n" +
+                "SLOC is determined by: Nguyen, Vu et al. \"A SLOC Counting Standard.\" (2007).\n",
+        sortOptions = false)
 
 public class Metrics {
     public long numLines;
     public long numWords;
     public long numChars;
-    public long numCmts;
-    public long numSrcLns;
     public String fileExt;
 
     public Metrics() {}
@@ -93,28 +128,20 @@ public class Metrics {
             CodeReader codeIn = new CodeReader();
             if (srcLnStat || cmtStat) printHeader();
             for (File temp : inFiles) {
-                codeIn.readLines(temp);
                 lineCount(temp);
                 wordAndCharCount(temp);
+                if (getExtension(temp)) codeIn.readLines(temp);
                 getExtension(temp);
-                printStats(temp);
-                numLines = numWords = numChars = numSrcLns = numCmts = 0;
+                printStats(temp, codeIn);
+                numLines = numWords = numChars = 0;
+                codeIn.setNumOfCmts(0); codeIn.setNumOfSrcLngs(0);
             }
-
-            System.out.println();
-            System.out.println("Line Count = " + numLines);
-            System.out.println("Word Count = " + numWords);
-            System.out.println("Char Count = " + numChars);
-            System.out.println("File Ext = " + fileExt);
-        }catch (IOException e) {
-            e.printStackTrace();
-        }
+        }catch (IOException e) { e.printStackTrace(); }
     }
 
     public void lineCount(File currFile) throws Exception{
         BufferedReader reader = new BufferedReader(new FileReader(currFile));
         numLines = reader.lines().count();
-        //while(reader.readLine() != null) numLines++;
     }
 
     public void wordAndCharCount(File currFile) throws Exception{
@@ -129,7 +156,12 @@ public class Metrics {
         }
     }
 
-    public void getExtension(File tempFile){fileExt = tempFile.getName().substring(tempFile.getName().indexOf("."));}
+    public boolean getExtension(File tempFile){
+        fileExt = tempFile.getName().substring(tempFile.getName().indexOf("."));
+        if (fileExt.equals(".java") || fileExt.equals(".c") || fileExt.equals(".h") ||
+            fileExt.equals(".cpp") || fileExt.equals(".hpp")) return true;
+        return false;
+    }
 
     public void printHeader(){
             if (lineStat) System.out.printf("%-10s", "Lines");
@@ -140,15 +172,15 @@ public class Metrics {
             System.out.printf("%8s", "File\n");
     }
 
-    public void printStats(File temp){
+    public void printStats(File temp, CodeReader in){
         if (!lineStat && !wordStat && !charStat && !cmtStat && !srcLnStat)
             System.out.printf("%-5d %-5d %-8d %10s\n", numLines, numWords, numChars, temp.getName());
         else {
             if (lineStat) System.out.printf("%-10s", numLines);
             if (wordStat) System.out.printf("%-10s", numWords);
             if (charStat) System.out.printf("%-10s", numChars);
-            if (cmtStat) System.out.printf("%-10s", numCmts);
-            if (srcLnStat) System.out.printf("%-10s", numSrcLns);
+            if (cmtStat) System.out.printf("%-10s", in.getNumOfCmts());
+            if (srcLnStat) System.out.printf("%-10s", in.getNumOfSrcLns());
             System.out.printf("%8s\n", temp.getName());
         }
     }
