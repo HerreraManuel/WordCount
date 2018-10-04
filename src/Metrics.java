@@ -7,21 +7,42 @@ Counting and file reading methods obtained from:
 www.vogella.com/tutorials/JavaIO/article.html
 https://stackoverflow.com/questions/4094119/counting-number-of-words-in-a-file
 https://stackoverflow.com/questions/16802147/java-i-want-to-read-a-file-name-from-command-line-then-use-a-bufferedreader-to
+
+Counting comments implementation by"
+https://gist.github.com/shiva27/1432290
  */
 
 
 import picocli.CommandLine.*;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 
+
 @Command(name = "Metrics", footer = "\nCSC131: Individual Project - Sprint 2. Design document available.", description =
         "If no option is declared, prints lines, words, character, comment lines, source line counts for each" +
                 "FILE, and a total line if more than one FILE is specified. Otherwise, prints specified request for FILE(s).\n" +
                 "\"Source lines of code\" is determined on the [author & journal].\n", sortOptions = false)
+
+class CodeReader{
+    public void readLines(BufferedReader reader) throws IOException {
+        int count = 0;
+        boolean commentStart = false;
+        String currentLine = null;
+        while ((currentLine = reader.readLine()) != null) {
+            currentLine = currentLine.trim();
+        }
+    }
+
+    public boolean commentStart(String line){
+        int index = line.indexOf("/*");
+        if (index < 0) return false;
+        int startIndex = line.indexOf("\"");
+        return true;
+    }
+}
 
 public class Metrics {
     public long numLines;
@@ -111,6 +132,7 @@ public class Metrics {
         else {
             //Metrics m = new Metrics();
             try {
+
                 Metrics m = picocli.CommandLine.populateCommand(new Metrics(), args);
                 if (m.help) {
                     picocli.CommandLine.usage(new Metrics(), System.out);}
