@@ -26,13 +26,23 @@ import java.util.List;
                 "FILE, and a total line if more than one FILE is specified. Otherwise, prints specified request for FILE(s).\n" +
                 "\"Source lines of code\" is determined on the [author & journal].\n", sortOptions = false)
 
-class CodeReader{
-    public void readLines(BufferedReader reader) throws IOException {
+class CodeReader extends Metrics {
+    public long numOfCmts;
+    public long numOfSrcLns;
+
+    public void readLines(File inFile) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(inFile));
         int count = 0;
         boolean commentStart = false;
-        String currentLine = null;
-        while ((currentLine = reader.readLine()) != null) {
-            currentLine = currentLine.trim();
+        String currLine = null;
+        while ((currLine = reader.readLine()) != null) {
+            currLine = currLine.trim();
+            if (commentStart(currLine)) {
+                if (commentEnd(currLine)) {
+                    currLine = currLine.substring(currLine.indexOf("*/") + 2).trim();
+                    commentStart = false;
+                }
+            }
         }
     }
 
@@ -40,7 +50,27 @@ class CodeReader{
         int index = line.indexOf("/*");
         if (index < 0) return false;
         int startIndex = line.indexOf("\"");
-        return true;
+        if (startIndex != -1 && startIndex < index) {
+            while (startIndex > -1) {
+                line = line.substring(startIndex + 1);
+                int endIndex= line.indexOf("\"");
+                line = line.substring(endIndex + 1);
+                startIndex = line.indexOf("\"");
+            }
+            return commentStart(line);
+        }
+        return false;
+    }
+
+    public boolean commentEnd(String line){
+        int index = line.indexOf("*/");
+        if (index < 0) return false;
+        else{
+            String subString = line.substring(index + 2).trim();
+            if ("".equals(subString) || subString.startsWith("//")) {numOfCmts++; return true;}
+            if (commentStart(subString)) return false;
+            else {numOfCmts++; return true;}
+        }
     }
 }
 
@@ -65,8 +95,10 @@ public class Metrics {
 
     public void run(List<File> inFiles) throws Exception {
         try {
+            CodeReader codeIn = new CodeReader();
             if (srcLnStat || cmtStat) printHeader();
             for (File temp : inFiles) {
+                codeIn.readLines(temp);
                 lineCount(temp);
                 wordAndCharCount(temp);
                 getExtension(temp);
@@ -132,7 +164,6 @@ public class Metrics {
         else {
             //Metrics m = new Metrics();
             try {
-
                 Metrics m = picocli.CommandLine.populateCommand(new Metrics(), args);
                 if (m.help) {
                     picocli.CommandLine.usage(new Metrics(), System.out);}
