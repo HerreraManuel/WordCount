@@ -27,6 +27,8 @@ public class Metrics {
     public long numLines;
     public long numWords;
     public long numChars;
+    public long numCmts;
+    public long numSrcLns;
     public String fileExt;
 
     public Metrics() {}
@@ -42,13 +44,17 @@ public class Metrics {
 
     public void run(List<File> inFiles) throws Exception {
         try {
-            if (inFiles.size() > 1) printHeader(lineStat, wordStat, charStat, srcLnStat, cmtStat);
+            if (srcLnStat || cmtStat) printHeader();
             for (File temp : inFiles) {
                 lineCount(temp);
                 wordAndCharCount(temp);
                 getExtension(temp);
+                printStats(temp);
+                numLines = numWords = numChars = numSrcLns = numCmts = 0;
             }
-            System.out.println("\nLine Count = " + numLines);
+
+            System.out.println();
+            System.out.println("Line Count = " + numLines);
             System.out.println("Word Count = " + numWords);
             System.out.println("Char Count = " + numChars);
             System.out.println("File Ext = " + fileExt);
@@ -77,18 +83,26 @@ public class Metrics {
 
     public void getExtension(File tempFile){fileExt = tempFile.getName().substring(tempFile.getName().indexOf("."));}
 
-    public void printHeader(boolean lineStat, boolean wordStat, boolean charStat,
-                            boolean srcLnStat, boolean cmtStat){
+    public void printHeader(){
             if (lineStat) System.out.printf("%-10s", "Lines");
             if (wordStat) System.out.printf("%-10s", "Words");
             if (charStat) System.out.printf("%-10s", "Chars");
             if (cmtStat) System.out.printf("%-10s", "Cmmts");
             if (srcLnStat) System.out.printf("%-10s", "SrcLines");
-            System.out.printf("%8s", "File");
+            System.out.printf("%8s", "File\n");
     }
 
-    public void printStats(){
-
+    public void printStats(File temp){
+        if (!lineStat && !wordStat && !charStat && !cmtStat && !srcLnStat)
+            System.out.printf("%-5d %-5d %-8d %10s\n", numLines, numWords, numChars, temp.getName());
+        else {
+            if (lineStat) System.out.printf("%-10s", numLines);
+            if (wordStat) System.out.printf("%-10s", numWords);
+            if (charStat) System.out.printf("%-10s", numChars);
+            if (cmtStat) System.out.printf("%-10s", numCmts);
+            if (srcLnStat) System.out.printf("%-10s", numSrcLns);
+            System.out.printf("%8s\n", temp.getName());
+        }
     }
 
     //Currently set for simple test
@@ -100,7 +114,8 @@ public class Metrics {
                 Metrics m = picocli.CommandLine.populateCommand(new Metrics(), args);
                 if (m.help) {
                     picocli.CommandLine.usage(new Metrics(), System.out);}
-                if (m.lineStat) { m.run(m.files);}
+                //if (m.lineStat) { m.run(m.files);}
+                m.run(m.files);
             } catch (Exception e) {
                 e.printStackTrace();
             }
