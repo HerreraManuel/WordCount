@@ -39,15 +39,14 @@ class CodeReader extends Metrics {
         String currLine = null;
         while ((currLine = reader.readLine()) != null) {
             currLine = currLine.trim();
+            if (currLine.startsWith("//")) numOfCmts++;
             if (commentStart) {
                 if (commentEnd(currLine)) {
                     currLine = currLine.substring(currLine.indexOf("*/") + 2).trim();
                     commentStart = false;
                 }
             }
-            if (commentStart(currLine)) {
-                commentStart = true;
-            }
+            if (commentStart(currLine)) { commentStart = true;            }
         }
     }
 
@@ -55,15 +54,6 @@ class CodeReader extends Metrics {
         int index = line.indexOf("/*");
         if (index < 0) return false;
         int startIndex = line.indexOf("\"");
-        if (startIndex != -1 && startIndex < index) {
-            while (startIndex > -1) {
-                line = line.substring(startIndex + 1);
-                int endIndex= line.indexOf("\"");
-                line = line.substring(endIndex + 1);
-                startIndex = line.indexOf("\"");
-            }
-            return commentStart(line);
-        }
         return !commentEnd(line.substring((index + 2)));
     }
 
