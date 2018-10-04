@@ -49,6 +49,7 @@ class CodeReader{
             if (commentStart(currLine)) { commentStart = true;            }
             if (isSourceCodeLine(currLine)) numOfSrcLns++;
         }
+        totalCmts += numOfCmts; totalSrcLns += numOfSrcLns;
     }
 
     public boolean commentStart(String line){
@@ -93,12 +94,13 @@ class CodeReader{
     }
 
     public void setNumOfCmts(long newNum) { this.numOfCmts = newNum;}
-
     public void setNumOfSrcLngs(long newNum) { this.numOfSrcLns = newNum;}
-
     public long getNumOfCmts() { return numOfCmts;}
-
     public long getNumOfSrcLns() { return numOfSrcLns;}
+    public long getTotalCmts() { return totalCmts; }
+    public long getTotalSrcLns() { return totalSrcLns; }
+
+
 }
 @Command(name = "Metrics", footer = "\nCSC131: Individual Project - Sprint 2. Design document available.", description =
         "\nIf no option is declared, prints lines, words, character, comment lines, source line counts for each " +
@@ -110,6 +112,9 @@ public class Metrics {
     public long numLines;
     public long numWords;
     public long numChars;
+    public long totalLines;
+    public long totalWords;
+    public long totalChars;
     public String fileExt;
 
     public Metrics() {}
@@ -122,26 +127,27 @@ public class Metrics {
     @Option(names = {"-C", "--commentlines"}, description = "Print the number of comment lines") boolean cmtStat;
     @Option(names = {"-h", "--help"}, usageHelp = true,  description = "Display this help and exit") boolean help;
 
-
     public void run(List<File> inFiles) throws Exception {
         try {
             CodeReader codeIn = new CodeReader();
-            if (srcLnStat || cmtStat) printHeader();
+            boolean headerTrigger = true;
             for (File temp : inFiles) {
                 lineCount(temp);
                 wordAndCharCount(temp);
                 if (getExtension(temp)) codeIn.readLines(temp);
-                getExtension(temp);
-                printStats(temp, codeIn);
+                printStats(temp, codeIn, headerTrigger);
                 numLines = numWords = numChars = 0;
                 codeIn.setNumOfCmts(0); codeIn.setNumOfSrcLngs(0);
+                headerTrigger = false;
             }
+            printTotals(codeIn);
         }catch (IOException e) { e.printStackTrace(); }
     }
 
     public void lineCount(File currFile) throws Exception{
         BufferedReader reader = new BufferedReader(new FileReader(currFile));
         numLines = reader.lines().count();
+        totalLines += numLines;
     }
 
     public void wordAndCharCount(File currFile) throws Exception{
@@ -154,6 +160,8 @@ public class Metrics {
                 numWords += lineOfWords.length;
             }
         }
+        totalChars += numChars;
+        totalWords += numWords;
     }
 
     public boolean getExtension(File tempFile){
@@ -163,24 +171,32 @@ public class Metrics {
         return false;
     }
 
-    public void printHeader(){
-            if (lineStat) System.out.printf("%-10s", "Lines");
-            if (wordStat) System.out.printf("%-10s", "Words");
-            if (charStat) System.out.printf("%-10s", "Chars");
-            if (cmtStat) System.out.printf("%-10s", "Cmmts");
-            if (srcLnStat) System.out.printf("%-10s", "SrcLines");
-            System.out.printf("%8s", "File\n");
+    public void printTotals(CodeReader in) {
+        if (lineStat) System.out.printf("%-10d", totalLines);
+        if (wordStat) System.out.printf("%-10d", totalWords);
+        if (charStat) System.out.printf("%-10d", totalChars);
+        if (cmtStat) System.out.printf("%-10d", in.getTotalCmts());
+        if (srcLnStat) System.out.printf("%-10d", in.getTotalSrcLns());
+        System.out.printf("%-10s", "total");
     }
 
-    public void printStats(File temp, CodeReader in){
+    public void printStats(File temp, CodeReader in, boolean trigger){
         if (!lineStat && !wordStat && !charStat && !cmtStat && !srcLnStat)
             System.out.printf("%-5d %-5d %-8d %10s\n", numLines, numWords, numChars, temp.getName());
         else {
-            if (lineStat) System.out.printf("%-10s", numLines);
-            if (wordStat) System.out.printf("%-10s", numWords);
-            if (charStat) System.out.printf("%-10s", numChars);
-            if (cmtStat) System.out.printf("%-10s", in.getNumOfCmts());
-            if (srcLnStat) System.out.printf("%-10s", in.getNumOfSrcLns());
+            if ((cmtStat || srcLnStat) && trigger) {
+                if (lineStat) System.out.printf("%-10s", "Lines");
+                if (wordStat) System.out.printf("%-10s", "Words");
+                if (charStat) System.out.printf("%-10s", "Chars");
+                if (cmtStat) System.out.printf("%-10s", "Cmmts");
+                if (srcLnStat) System.out.printf("%-10s", "SrcLines");
+                System.out.printf("%4s", "File\n");
+            }
+            if (lineStat) System.out.printf("%-10d", numLines);
+            if (wordStat) System.out.printf("%-10d", numWords);
+            if (charStat) System.out.printf("%-10d", numChars);
+            if (cmtStat) System.out.printf("%-10d", in.getNumOfCmts());
+            if (srcLnStat) System.out.printf("%-10d", in.getNumOfSrcLns());
             System.out.printf("%8s\n", temp.getName());
         }
     }
@@ -189,18 +205,10 @@ public class Metrics {
     public static void main(String[] args){
         if (args.length < 1) picocli.CommandLine.usage(new Metrics(), System.out);
         else {
-            //Metrics m = new Metrics();
             try {
                 Metrics m = picocli.CommandLine.populateCommand(new Metrics(), args);
-                if (m.help) {
-                    picocli.CommandLine.usage(new Metrics(), System.out);}
-                //if (m.lineStat) { m.run(m.files);}
                 m.run(m.files);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
+            } catch (Exception e) { e.printStackTrace(); }
         }
-
     }
 }
