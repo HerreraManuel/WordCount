@@ -1,15 +1,13 @@
 /* Manuel Herrera
- * Fall 2018
- * Sprint 2*/
 
-/*
 Counting and file reading methods obtained from:
 www.vogella.com/tutorials/JavaIO/article.html
 https://stackoverflow.com/questions/4094119/counting-number-of-words-in-a-file
 https://stackoverflow.com/questions/16802147/java-i-want-to-read-a-file-name-from-command-line-then-use-a-bufferedreader-to
 
-Counting comments implementation
+Counting comments and source line of code implementation by
 https://gist.github.com/shiva27/1432290
+Some minor adjustments made to make it for this sprint.
 
 Source Lines of Code determined by
 "A SLOC Counting Standard." (2007)
@@ -17,15 +15,16 @@ by Nguyen, Vu, Sophia Deeds-Rubin, Thomas Tan and B. Bohm
  */
 
 
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
-import picocli.CommandLine.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
-
-
 
 class CodeReader{
     public long numOfCmts;
@@ -33,6 +32,7 @@ class CodeReader{
     public long totalCmts;
     public long totalSrcLns;
 
+    //Separate readLine function for Comments and Source Lines
     public void readLines(File inFile) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(inFile));
         boolean commentStart = true;
@@ -99,16 +99,15 @@ class CodeReader{
     public long getNumOfSrcLns() { return numOfSrcLns;}
     public long getTotalCmts() { return totalCmts; }
     public long getTotalSrcLns() { return totalSrcLns; }
-
-
 }
+
 @Command(name = "Metrics", footer = "\nCSC131: Individual Project - Sprint 2. Design document available.", description =
         "\nIf no option is declared, prints lines, words, character, comment lines, source line counts for each " +
                 "FILE, and a total line if more than one FILE is specified. Otherwise, prints specified request for FILE(s).\n" +
                 "SLOC is determined by: Nguyen, Vu et al. \"A SLOC Counting Standard.\" (2007).\n",
         sortOptions = false)
 
-public class Metrics {
+class Metrics {
     public long numLines;
     public long numWords;
     public long numChars;
@@ -201,12 +200,11 @@ public class Metrics {
         }
     }
 
-    //Currently set for simple test
     public static void main(String[] args){
-        if (args.length < 1) picocli.CommandLine.usage(new Metrics(), System.out);
+        if (args.length < 1) CommandLine.usage(new Metrics(), System.out);
         else {
             try {
-                Metrics m = picocli.CommandLine.populateCommand(new Metrics(), args);
+                Metrics m = CommandLine.populateCommand(new Metrics(), args);
                 m.run(m.files);
             } catch (Exception e) { e.printStackTrace(); }
         }
