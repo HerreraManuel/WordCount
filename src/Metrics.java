@@ -139,7 +139,7 @@ class Metrics {
                 codeIn.setNumOfCmts(0); codeIn.setNumOfSrcLngs(0);
                 headerTrigger = false;
             }
-            printTotals(codeIn);
+            if(inFiles.size() > 1) printTotals(codeIn);
         }catch (IOException e) { e.printStackTrace(); }
     }
 
@@ -176,7 +176,7 @@ class Metrics {
         if (charStat) System.out.printf("%-10d", totalChars);
         if (cmtStat) System.out.printf("%-10d", in.getTotalCmts());
         if (srcLnStat) System.out.printf("%-10d", in.getTotalSrcLns());
-        System.out.printf("%-10s", "total");
+        System.out.printf("%-10s", "total\n");
     }
 
     public void printStats(File temp, CodeReader in, boolean trigger){
