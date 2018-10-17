@@ -1,19 +1,17 @@
 /* Manuel Herrera
-
 Counting and file reading methods obtained from:
 www.vogella.com/tutorials/JavaIO/article.html
 https://stackoverflow.com/questions/4094119/counting-number-of-words-in-a-file
 https://stackoverflow.com/questions/16802147/java-i-want-to-read-a-file-name-from-command-line-then-use-a-bufferedreader-to
-
 Counting comments and source line of code implementation by
 https://gist.github.com/shiva27/1432290
 Some minor adjustments made to make it for this sprint.
-
 Source Lines of Code determined by
 "A SLOC Counting Standard." (2007)
 by Nguyen, Vu, Sophia Deeds-Rubin, Thomas Tan and B. Bohm
  */
 
+import com.sun.org.apache.xalan.internal.xsltc.runtime.Operators;
 import picocli.*;
 import picocli.CommandLine.*;
 
@@ -25,14 +23,14 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 
-class SourceFileCounts extends Metrics{
+class SourceFileCounts{
     StreamTokenizer inTokenizer;
     FileReader fileReader;
     BufferedReader buffReader;
 
-        int noCmtSize;
+    int noCmtSize;
 
-        public void inSourceCounter(String fileName) throws Exception {
+    public void inSourceCounter(String fileName) throws Exception {
         fileReader = new FileReader(fileName);
         buffReader = new BufferedReader(fileReader);
         inTokenizer = new StreamTokenizer(buffReader);
@@ -52,11 +50,38 @@ class SourceFileCounts extends Metrics{
 
 }
 
-class FileCounts {
-    String fileName;
+class DistinctCode{
+    public String[] javaOperators = {"[]", "()", ".", "", "++", "--", "+", "-", "!", "~", "(type)",
+            "*", "/", "%", "<<", ">>", ">>>", "<", "<=", ">", ">=", "instanceof", "==", "!=", "&",
+            "^", "|", "&&", "||", "?:", "=", "+=", "-=", "*=", "/=", "%=", "{", "}", "{}", "(", ")",
+            "&=", ">>>=", "#", "##", "^=", "?"};
 
+    public String[] javaOperands = {"bool", "byte", "int", "float", "char", "double", "long",
+    "short", "signed", "unsigned", "void", "break", "case", "catch", "try",
+    "const", "null", "while", "public", "static", "main", "else", "for", "while"};
+
+    public String[] cOperators = {"[]", "()", "->", ".", "!", "~", "+", "-", "++", "--", "&", "*"
+            , "sizeof", "(type)", "/", "%", "<<", ">>", "<", "<=", ">", ">=", "==", "!=", "&&",
+            "||", "|", "^", "?:", "=", "*=", "/=", "%=", "+=", "-=", "&=", "^=", "|=", "<<=",
+            ">>=", ","};
+
+    public String[] cOperands = {"int", "float", "char", "double", "long", "short", "signed", "unsigned",
+            "void"};
 }
 
+class Halstead {
+    long numOfOperators;
+    long numOfOperands;
+    long totalOperators;
+    long totalOperands;
+
+    void countDistinctOperators(BufferedReader reader, boolean isJava, boolean isC) throws Exception{
+        StreamTokenizer inTokenizer = new StreamTokenizer(reader);
+        int word;
+        while((word = inTokenizer.nextToken()) != StreamTokenizer.TT_EOF ) {
+
+    }
+}
 
 @Command(name = "Metrics", footer = "\nCSC131: Individual Project - Sprint 2. Design document available.", description =
         "\nIf no option is declared, prints lines, words, character, comment lines, source line counts for each " +
@@ -81,6 +106,7 @@ class Metrics {
     @Option(names = {"-c", "--characters"}, description = "Print the number of characters") boolean charStat;
     @Option(names = {"-s", "--sourceLines"}, description = "Print the number of source lines") boolean srcLnStat;
     @Option(names = {"-C", "--commentlines"}, description = "Print the number of comment lines") boolean cmtStat;
+    @Option(names = "-H", description = "Print Halstead's metrics") boolean halstead;
     @Option(names = {"-h", "--help"}, usageHelp = true,  description = "Display this help and exit") boolean help;
 
     public void run(String[] inFiles) throws Exception {
@@ -122,20 +148,20 @@ class Metrics {
     public boolean getExtension(File tempFile){
         fileExt = tempFile.getName().substring(tempFile.getName().indexOf("."));
         if (fileExt.equals(".java") || fileExt.equals(".c") || fileExt.equals(".h") ||
-            fileExt.equals(".cpp") || fileExt.equals(".hpp")) return true;
+                fileExt.equals(".cpp") || fileExt.equals(".hpp")) return true;
         return false;
     }
 
     public void printTotals() {
         if (!lineStat && !wordStat && !charStat && !cmtStat && !srcLnStat)
             System.out.printf("%-5d %-5d %-10d %-4s", totalLines, totalWords, totalChars, "total\n");
-            else{
+        else{
             if (lineStat) System.out.printf("%-10d", totalLines);
             if (wordStat) System.out.printf("%-10d", totalWords);
             if (charStat) System.out.printf("%-10d", totalChars);
             System.out.printf("%-20s", "total\n");
         }
-            System.out.println();
+        System.out.println();
     }
 
     public void printStats(String temp, boolean trigger){
