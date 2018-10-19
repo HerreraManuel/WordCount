@@ -45,12 +45,12 @@ class DistinctCode{
 }
 
 class HalsteadCounts extends DistinctCode{
-    public long numOfDistinctOperators;
-    public long numOfDistinctOperands;
+    public int numOfDistinctOperators;
+    public int numOfDistinctOperands;
     public ArrayList<String> operatorHolder;
     public ArrayList<String> operandHolder;
-    public long totalOperators;
-    public long totalOperands;
+    public int totalOperators;
+    public int totalOperands;
 
     void getDistinctOperators(File inFile) throws Exception{
         numOfDistinctOperators = 0;
@@ -97,6 +97,47 @@ class HalsteadCounts extends DistinctCode{
 }
 
 class HalsteadMetrics extends HalsteadCounts{
+    public long progVocab;
+    public long progLen;
+    public double calProgLen;
+    public double progVol;
+    public double progDiff;
+    public double progEffort;
+    public double progTimeReq;
+    public double progDelivBugs;
+
+    HalsteadMetrics() {
+        progVocab = 0;
+        progLen = 0;
+        calProgLen = 0;
+        progVol = 0;
+        progDiff =0;
+        progEffort = 0;
+        progTimeReq = 0;
+        progDelivBugs = 0;
+    }
+
+    void runHalstead() {
+        vocab(); length(); calLen(); vol(); diff();
+        effort(); timeReq(); bugs();
+    }
+
+    void vocab() { progVocab = numOfDistinctOperators + numOfDistinctOperands;}
+
+    void length() { progLen = totalOperators + totalOperands;}
+
+    void calLen() { calProgLen = numOfDistinctOperators * (Math.log(numOfDistinctOperators) / Math.log(2))
+                     + numOfDistinctOperands * (Math.log(numOfDistinctOperands) / Math.log(2));}
+
+    void vol() { progVol = calProgLen * (Math.log(progVocab) / Math.log(2));}
+
+    void diff() {progDiff = (numOfDistinctOperators / 2) * (totalOperands / numOfDistinctOperands);}
+
+    void effort() { progEffort = progDiff * progVol;}
+
+    void timeReq() { progTimeReq = progEffort / 18;}
+
+    void bugs() { progDelivBugs = Math.pow(progTimeReq, (2/3)) / 3000;}
 
 }
 
