@@ -47,10 +47,15 @@ class DistinctCode{
 class HalsteadCounts extends DistinctCode{
     public int numOfDistinctOperators;
     public int numOfDistinctOperands;
-    public ArrayList<String> operatorHolder;
-    public ArrayList<String> operandHolder;
+    public ArrayList operatorHolder;
+    public ArrayList operandHolder;
     public int totalOperators;
     public int totalOperands;
+
+    void runHal(File inFile) throws Exception{
+        getDistinctOperators(inFile);
+        getDistinctOperands(inFile);
+    }
 
     void getDistinctOperators(File inFile) throws Exception{
         numOfDistinctOperators = 0;
@@ -59,11 +64,11 @@ class HalsteadCounts extends DistinctCode{
         int word;
         while ((word = inToken.nextToken()) != StreamTokenizer.TT_EOF){
             String currWord = inToken.sval;
-            if (isOperator(currWord)) {
+            if (currWord != null && isOperator(currWord)) {
                 totalOperators++;
                 if (!inOperatorList(currWord)) {
                     numOfDistinctOperators++;
-                    operatorHolder.add(currWord);
+                    //operatorHolder.add(currWord);
                 }
             }
        }
@@ -73,15 +78,14 @@ class HalsteadCounts extends DistinctCode{
         numOfDistinctOperands = 0;
         BufferedReader reader = new BufferedReader(new FileReader(inFile));
         StreamTokenizer inToken = new StreamTokenizer(reader);
-        operatorHolder.clear();
         int word;
         while ((word = inToken.nextToken()) != StreamTokenizer.TT_EOF){
             String currWord = inToken.sval;
-            if (isOperand(currWord)) {
+            if (currWord != null && isOperand(currWord)) {
                 totalOperands++;
                 if (!inOperandList(currWord)) {
                     numOfDistinctOperands++;
-                    operandHolder.add(currWord);
+                    //operandHolder.add(currWord);
                 }
             }
         }
@@ -89,11 +93,11 @@ class HalsteadCounts extends DistinctCode{
 
     boolean isOperator(String word) { return Arrays.stream(javaOperators).anyMatch(word::equals); }
 
-    boolean inOperatorList(String word) { return operatorHolder.stream().anyMatch(word::equals); }
+    boolean inOperatorList(String word) { return false;} //operatorHolder.stream().anyMatch(word::equals); }
 
     boolean isOperand(String word) { return Arrays.stream(javaOperands).anyMatch(word::equals); }
 
-    boolean inOperandList(String word) { return operandHolder.stream().anyMatch(word::equals); }
+    boolean inOperandList(String word) { return false;} // operandHolder.stream().anyMatch(word::equals); }
 }
 
 class HalsteadMetrics extends HalsteadCounts{
@@ -120,6 +124,7 @@ class HalsteadMetrics extends HalsteadCounts{
     void runHalstead() {
         vocab(); length(); calLen(); vol(); diff();
         effort(); timeReq(); bugs();
+        printMetrics();
     }
 
     void vocab() { progVocab = numOfDistinctOperators + numOfDistinctOperands;}
@@ -131,7 +136,7 @@ class HalsteadMetrics extends HalsteadCounts{
 
     void vol() { progVol = calProgLen * (Math.log(progVocab) / Math.log(2));}
 
-    void diff() {progDiff = (numOfDistinctOperators / 2) * (totalOperands / numOfDistinctOperands);}
+    void diff() {progDiff = (numOfDistinctOperators / 2) * (totalOperands / 1);}
 
     void effort() { progEffort = progDiff * progVol;}
 
@@ -139,7 +144,19 @@ class HalsteadMetrics extends HalsteadCounts{
 
     void bugs() { progDelivBugs = Math.pow(progTimeReq, (2/3)) / 3000;}
 
+    void printMetrics() {
+        System.out.printf("%-10d %-10d %-10.3f %-10.3f %-10.3f %-10.3f %-10.3f %-10.3f",
+                progVocab, progLen, calProgLen, progVol, progDiff, progEffort, progTimeReq, progDelivBugs);
+    }
+
+    void printHalsteadHeader() {
+        System.out.printf("%-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s",
+                "Vocab", "Lgth", "CalLen", "Vol", "Diff", "Effort", "T Req", "Bugs");
+    }
+
 }
+
+
 
 class CodeReader{
     public long numOfCmts;
@@ -239,19 +256,23 @@ public class Metrics {
     @Option(names = {"-c", "--characters"}, description = "Print the number of characters") boolean charStat;
     @Option(names = {"-s", "--sourceLines"}, description = "Print the number of source lines") boolean srcLnStat;
     @Option(names = {"-C", "--commentlines"}, description = "Print the number of comment lines") boolean cmtStat;
+    @Option(names = "-H", description = "Print Halstead metrics") boolean halStat;
     @Option(names = {"-h", "--help"}, usageHelp = true,  description = "Display this help and exit") boolean help;
 
     public void run(List<File> inFiles) throws Exception {
         try {
             HalsteadCounts hal = new HalsteadCounts();
+            HalsteadMetrics halMet = new HalsteadMetrics();
             CodeReader codeIn = new CodeReader();
             boolean headerTrigger = true;
             for (File temp : inFiles) {
                 lineCount(temp);
                 wordAndCharCount(temp);
-                if (getExtension(temp)) codeIn.readLines(temp);
-                //hal.operatorHolder.clear();
-                printStats(temp, codeIn, headerTrigger);
+                if (getExtension(temp)){
+                    codeIn.readLines(temp);
+                    hal.runHal(temp);
+                }
+                printStats(temp, codeIn, halMet, headerTrigger);
                 numLines = numWords = numChars = 0;
                 codeIn.setNumOfCmts(0); codeIn.setNumOfSrcLngs(0);
                 headerTrigger = false;
@@ -296,16 +317,17 @@ public class Metrics {
         System.out.printf("%-10s", "total\n");
     }
 
-    public void printStats(File temp, CodeReader in, boolean trigger){
+    public void printStats(File temp, CodeReader in, HalsteadMetrics inHal, boolean trigger){
         if (!lineStat && !wordStat && !charStat && !cmtStat && !srcLnStat)
             System.out.printf("%-5d %-5d %-8d %10s\n", numLines, numWords, numChars, temp.getName());
         else {
-            if ((cmtStat || srcLnStat) && trigger) {
+            if ((cmtStat || srcLnStat || halStat) && trigger) {
                 if (lineStat) System.out.printf("%-10s", "Lines");
                 if (wordStat) System.out.printf("%-10s", "Words");
                 if (charStat) System.out.printf("%-10s", "Chars");
                 if (cmtStat) System.out.printf("%-10s", "Cmmts");
                 if (srcLnStat) System.out.printf("%-10s", "SrcLines");
+                if (halStat) inHal.printHalsteadHeader();
                 System.out.printf("%4s", "File\n");
             }
             if (lineStat) System.out.printf("%-10d", numLines);
@@ -313,6 +335,7 @@ public class Metrics {
             if (charStat) System.out.printf("%-10d", numChars);
             if (cmtStat) System.out.printf("%-10d", in.getNumOfCmts());
             if (srcLnStat) System.out.printf("%-10d", in.getNumOfSrcLns());
+            if (halStat) inHal.runHalstead();
             System.out.printf("%8s\n", temp.getName());
         }
     }
