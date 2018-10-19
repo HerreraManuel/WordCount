@@ -44,10 +44,11 @@ class DistinctCode{
             "void"};
 }
 
-class HalsteadMetrics extends DistinctCode{
+class HalsteadCounts extends DistinctCode{
     public long numOfDistinctOperators;
     public long numOfDistinctOperands;
     public ArrayList<String> operatorHolder;
+    public ArrayList<String> operandHolder;
     public long totalOperators;
     public long totalOperands;
 
@@ -55,24 +56,48 @@ class HalsteadMetrics extends DistinctCode{
         numOfDistinctOperators = 0;
         BufferedReader reader = new BufferedReader(new FileReader(inFile));
         StreamTokenizer inToken = new StreamTokenizer(reader);
-        operatorHolder.clear();
         int word;
         while ((word = inToken.nextToken()) != StreamTokenizer.TT_EOF){
             String currWord = inToken.sval;
-            if (isOperator(currWord) && !inCurrList(currWord)) {
-                numOfDistinctOperators++;
-                operatorHolder.add(currWord);
+            if (isOperator(currWord)) {
+                totalOperators++;
+                if (!inOperatorList(currWord)) {
+                    numOfDistinctOperators++;
+                    operatorHolder.add(currWord);
+                }
             }
        }
     }
 
-    boolean isOperator(String word) {
-        return Arrays.stream(javaOperators).anyMatch(word::equals);
+    void getDistinctOperands(File inFile) throws Exception{
+        numOfDistinctOperands = 0;
+        BufferedReader reader = new BufferedReader(new FileReader(inFile));
+        StreamTokenizer inToken = new StreamTokenizer(reader);
+        operatorHolder.clear();
+        int word;
+        while ((word = inToken.nextToken()) != StreamTokenizer.TT_EOF){
+            String currWord = inToken.sval;
+            if (isOperand(currWord)) {
+                totalOperands++;
+                if (!inOperandList(currWord)) {
+                    numOfDistinctOperands++;
+                    operandHolder.add(currWord);
+                }
+            }
+        }
     }
 
-    boolean inCurrList(String word) {
-        return operatorHolder.stream().anyMatch(word::equals);
-    }
+    boolean isOperator(String word) { return Arrays.stream(javaOperators).anyMatch(word::equals); }
+
+    boolean inOperatorList(String word) { return operatorHolder.stream().anyMatch(word::equals); }
+
+    boolean isOperand(String word) { return Arrays.stream(javaOperands).anyMatch(word::equals); }
+
+    boolean inOperandList(String word) { return operandHolder.stream().anyMatch(word::equals); }
+}
+
+class HalsteadMetrics extends HalsteadCounts{
+
 }
 
 class CodeReader{
@@ -177,12 +202,14 @@ public class Metrics {
 
     public void run(List<File> inFiles) throws Exception {
         try {
+            HalsteadCounts hal = new HalsteadCounts();
             CodeReader codeIn = new CodeReader();
             boolean headerTrigger = true;
             for (File temp : inFiles) {
                 lineCount(temp);
                 wordAndCharCount(temp);
                 if (getExtension(temp)) codeIn.readLines(temp);
+                //hal.operatorHolder.clear();
                 printStats(temp, codeIn, headerTrigger);
                 numLines = numWords = numChars = 0;
                 codeIn.setNumOfCmts(0); codeIn.setNumOfSrcLngs(0);
