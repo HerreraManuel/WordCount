@@ -26,7 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 
 class DistinctCode{
-    public String[] javaOperators = {"[]", "()", ".", "", "++", "--", "+", "-", "!", "~", "(type)",
+    public String[] javaOperators = {"import", "[]", "()", ".", "", "++", "--", "+", "-", "!", "~", "(type)",
             "*", "/", "%", "<<", ">>", ">>>", "<", "<=", ">", ">=", "instanceof", "==", "!=", "&",
             "^", "|", "&&", "||", "?:", "=", "+=", "-=", "*=", "/=", "%=", "{", "}", "{}", "(", ")",
             "&=", ">>>=", "#", "##", "^=", "?"};
@@ -47,12 +47,14 @@ class DistinctCode{
 class HalsteadCounts extends DistinctCode{
     public int numOfDistinctOperators;
     public int numOfDistinctOperands;
-    public ArrayList operatorHolder;
-    public ArrayList operandHolder;
+    public ArrayList<String> operatorHolder;
+    public ArrayList<String> operandHolder;
     public int totalOperators;
     public int totalOperands;
 
     void runHal(File inFile) throws Exception{
+        operatorHolder = new ArrayList<String>();
+        operandHolder = new ArrayList<String>();
         getDistinctOperators(inFile);
         getDistinctOperands(inFile);
     }
@@ -64,11 +66,11 @@ class HalsteadCounts extends DistinctCode{
         int word;
         while ((word = inToken.nextToken()) != StreamTokenizer.TT_EOF){
             String currWord = inToken.sval;
-            if (currWord != null && isOperator(currWord)) {
+            if (!isOperator(currWord)) {
                 totalOperators++;
                 if (!inOperatorList(currWord)) {
                     numOfDistinctOperators++;
-                    //operatorHolder.add(currWord);
+                    operatorHolder.add(currWord);
                 }
             }
        }
@@ -81,23 +83,23 @@ class HalsteadCounts extends DistinctCode{
         int word;
         while ((word = inToken.nextToken()) != StreamTokenizer.TT_EOF){
             String currWord = inToken.sval;
-            if (currWord != null && isOperand(currWord)) {
+            if (isOperand(currWord)) {
                 totalOperands++;
                 if (!inOperandList(currWord)) {
                     numOfDistinctOperands++;
-                    //operandHolder.add(currWord);
+                    operandHolder.add(currWord);
                 }
             }
         }
     }
 
-    boolean isOperator(String word) { return Arrays.stream(javaOperators).anyMatch(word::equals); }
+    boolean isOperator(String word) { return Arrays.asList(javaOperators).contains(word); }
 
-    boolean inOperatorList(String word) { return false;} //operatorHolder.stream().anyMatch(word::equals); }
+    boolean inOperatorList(String word) { return operatorHolder.contains(word);} //operatorHolder.stream().anyMatch(word::equals); }
 
-    boolean isOperand(String word) { return Arrays.stream(javaOperands).anyMatch(word::equals); }
+    boolean isOperand(String word) { return Arrays.asList(javaOperands).contains(word); }
 
-    boolean inOperandList(String word) { return false;} // operandHolder.stream().anyMatch(word::equals); }
+    boolean inOperandList(String word) { return operandHolder.contains(word);} // operandHolder.stream().anyMatch(word::equals); }
 }
 
 class HalsteadMetrics extends HalsteadCounts{
@@ -163,6 +165,7 @@ class CodeReader{
     public long numOfSrcLns;
     public long totalCmts;
     public long totalSrcLns;
+    String fileExt;
 
     //Separate readLine function for Comments and Source Lines
     public void readLines(File inFile) throws IOException {
@@ -231,6 +234,24 @@ class CodeReader{
     public long getNumOfSrcLns() { return numOfSrcLns;}
     public long getTotalCmts() { return totalCmts; }
     public long getTotalSrcLns() { return totalSrcLns; }
+
+
+    public boolean isJava(File tempFile){
+        fileExt = tempFile.getName().substring(tempFile.getName().indexOf("."));
+        return fileExt.equals(".java");
+    }
+
+    public boolean isC(File tempFile){
+        fileExt = tempFile.getName().substring(tempFile.getName().indexOf("."));
+        if (fileExt.equals(".h") || fileExt.equals(".cpp") || fileExt.equals(".hpp")) return true;
+        return false;
+    }
+
+    public boolean isCPP(File tempFile){
+        fileExt = tempFile.getName().substring(tempFile.getName().indexOf("."));
+        if (fileExt.equals(".c") || fileExt.equals(".h")) return true;
+        return false;
+    }
 }
 
 @Command(name = "Metrics", footer = "\nCSC131: Individual Project - Sprint 2. Design document available.", description =
@@ -268,10 +289,10 @@ public class Metrics {
             for (File temp : inFiles) {
                 lineCount(temp);
                 wordAndCharCount(temp);
-                if (getExtension(temp)){
+                //if (getExtension(temp)){
                     codeIn.readLines(temp);
                     hal.runHal(temp);
-                }
+               // }
                 printStats(temp, codeIn, halMet, headerTrigger);
                 numLines = numWords = numChars = 0;
                 codeIn.setNumOfCmts(0); codeIn.setNumOfSrcLngs(0);
@@ -283,7 +304,7 @@ public class Metrics {
 
     public void lineCount(File currFile) throws Exception{
         BufferedReader reader = new BufferedReader(new FileReader(currFile));
-        numLines = reader.lines().count();
+        //numLines = reader.lines().count();
         totalLines += numLines;
     }
 
