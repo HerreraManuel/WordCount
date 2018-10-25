@@ -51,8 +51,8 @@ class DistinctCode{
      public ArrayList<String> operandHolder;
      public int totalOperators;
      public int totalOperands;
-     public long progVocab;
-     public long progLen;
+     public int progVocab;
+     public int progLen;
      public double calProgLen;
      public double progVol;
      public double progDiff;
@@ -94,7 +94,7 @@ class DistinctCode{
 
     void bugs() { progDelivBugs = Math.pow(progTimeReq, (2/3)) / 3000;}
 
-    void getDistinctOperators(File inFile) throws Exception{
+    public int getDistinctOperators(File inFile) throws Exception{
         numOfDistinctOperators = 0;
         BufferedReader reader = new BufferedReader(new FileReader(inFile));
         StreamTokenizer inToken = new StreamTokenizer(reader);
@@ -109,9 +109,10 @@ class DistinctCode{
                 }
             }
        }
+       return numOfDistinctOperators;
     }
 
-    void getDistinctOperands(File inFile) throws Exception{
+    public int getDistinctOperands(File inFile) throws Exception{
         numOfDistinctOperands = 0;
         BufferedReader reader = new BufferedReader(new FileReader(inFile));
         StreamTokenizer inToken = new StreamTokenizer(reader);
@@ -126,7 +127,12 @@ class DistinctCode{
                 }
             }
         }
+        return numOfDistinctOperands;
     }
+
+    int getTotalOperators() { return totalOperators; }
+
+    int getTotalOperands() { return totalOperands; }
 
     boolean isOperator(String word) { return Arrays.asList(javaOperators).contains(word); }
 
@@ -162,14 +168,6 @@ class CodeReader {
         String currLine = null;
         while ((currLine = reader.readLine()) != null) {
             currLine = currLine.trim();
-           // if (currLine.startsWith("//")) numOfCmts++;
-           // if (commentStart) {
-             //   if (commentEnd(currLine)) {
-                    //currLine = currLine.substring(currLine.indexOf("*/") + 2).trim();
-                   // commentStart = false;
-               // }
-          //  }
-           // if (commentStart(currLine)) { commentStart = true;            }
             if (isSourceCodeLine(currLine)) numOfSrcLns++;
         }
         return numOfSrcLns;
@@ -272,11 +270,24 @@ public class Metrics implements IMetrics{
     public int numChars;
     public int numSrcLines;
     public int numOfCmts;
+    public int n1;
+    public int n2;
+    public int N1;
+    public int N2;
+    public int halVocab;
+    public int halProgLen;
+    public int halCalProgLen;
+    public int halVol;
+    public int halDiff;
+    public int halEffort;
+    public int halTime;
+    public int halBugs;
     public int totalLines;
     public int totalWords;
     public int totalChars;
     public String currentFile;
     public File currFile;
+    public HalsteadCounts in = new HalsteadCounts();
 
     public Metrics() {}
 
@@ -301,8 +312,18 @@ public class Metrics implements IMetrics{
                 numChars = getCharacterCount();
                 numSrcLines = getSourceLineCount();
                 numOfCmts = getCommentLineCount();
-                //lineCount(temp);
-                //wordAndCharCount(temp);
+                n1 = getHalsteadn1();
+                n2 = getHalsteadn2();
+                N1 = getHalsteadN1();
+                N2 = getHalsteadN2();
+                halVocab = getHalsteadVocabulary();
+                halProgLen = getHalsteadProgramLength();
+                halCalProgLen = getHalsteadCalculatedProgramLenght();
+                halVol = getHalsteadVolume();
+                halDiff = getHalsteadDifficulty();
+                halEffort = getHalsteadEffort();
+                halTime = getHalsteadTime();
+                halBugs = getHalsteadBugs();
                 //if (getExtension(temp)){
                     //codeIn.readLines(temp);
                     hal.runHal(temp);
@@ -377,21 +398,77 @@ public class Metrics implements IMetrics{
         return 0;
     }
 
-    /*
-    public void wordAndCharCount(File currFile) throws Exception{
-        BufferedReader wordReader = new BufferedReader(new FileReader(currFile));
-        String lineHolder;
-        while ((lineHolder = wordReader.readLine()) != null){
-            numChars += lineHolder.length();
-            if (!lineHolder.isEmpty()){
-                String[] lineOfWords = lineHolder.trim().split("\\s+");
-                numWords += lineOfWords.length;
-            }
-        }
-        totalChars += numChars;
-        totalWords += numWords;
+    @Override
+    public int getHalsteadn1() {
+        try {
+        return in.numOfDistinctOperators;
+        } catch (Exception e) { e.printStackTrace(); }
+        return 0;
     }
-    */
+
+    @Override
+    public int getHalsteadn2() {
+        try {
+            return in.numOfDistinctOperands;
+        } catch (Exception e) { e.printStackTrace(); }
+        return 0;
+    }
+
+    @Override
+    public int getHalsteadN1(){
+        try {
+            return in.getTotalOperators();
+        } catch (Exception e) { e.printStackTrace(); }
+        return 0;
+    }
+
+    @Override
+    public int getHalsteadN2(){
+        try {
+            return in.getTotalOperands();
+        } catch (Exception e) { e.printStackTrace(); }
+        return 0;
+    }
+
+    @Override
+    public int getHalsteadVocabulary() {
+        return in.progVocab;
+    }
+
+    @Override
+    public int getHalsteadProgramLength() {
+        return in.progLen;
+    }
+
+    @Override
+    public int getHalsteadCalculatedProgramLenght() {
+        return (int)in.calProgLen;
+    }
+
+    @Override
+    public int getHalsteadVolume() {
+        return (int)in.progVol;
+    }
+
+    @Override
+    public int getHalsteadDifficulty() {
+        return (int)in.progDiff;
+    }
+
+    @Override
+    public int getHalsteadEffort() {
+        return (int)in.progEffort;
+    }
+
+    @Override
+    public int getHalsteadTime() {
+        return (int)in.progTimeReq;
+    }
+
+    @Override
+    public int getHalsteadBugs() {
+        return (int)in.progDelivBugs;
+    }
 
     @Override
     public boolean isSource(){
