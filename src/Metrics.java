@@ -147,31 +147,50 @@ class DistinctCode{
     }
 }
 
-class CodeReader{
-    public long numOfCmts;
-    public long numOfSrcLns;
-    public long totalCmts;
-    public long totalSrcLns;
+class CodeReader {
+    public int numOfCmts;
+    public int numOfSrcLns;
+    public int totalCmts;
+    public int totalSrcLns;
     String fileExt;
+    String currentFile;
 
     //Separate readLine function for Comments and Source Lines
-    public void readLines(File inFile) throws IOException {
+    public int readSrcLines(File inFile) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(inFile));
+        boolean commentStart = true;
+        String currLine = null;
+        while ((currLine = reader.readLine()) != null) {
+            currLine = currLine.trim();
+           // if (currLine.startsWith("//")) numOfCmts++;
+           // if (commentStart) {
+             //   if (commentEnd(currLine)) {
+                    //currLine = currLine.substring(currLine.indexOf("*/") + 2).trim();
+                   // commentStart = false;
+               // }
+          //  }
+           // if (commentStart(currLine)) { commentStart = true;            }
+            if (isSourceCodeLine(currLine)) numOfSrcLns++;
+        }
+        return numOfSrcLns;
+        //totalCmts += numOfCmts; totalSrcLns += numOfSrcLns;
+    }
+
+    public int readCmtLines(File inFile) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(inFile));
         boolean commentStart = true;
         String currLine = null;
         while ((currLine = reader.readLine()) != null) {
             currLine = currLine.trim();
             if (currLine.startsWith("//")) numOfCmts++;
-            if (commentStart) {
-                if (commentEnd(currLine)) {
-                    currLine = currLine.substring(currLine.indexOf("*/") + 2).trim();
-                    commentStart = false;
-                }
+            if (commentStart) { if (commentEnd(currLine)) {
+            currLine = currLine.substring(currLine.indexOf("*/") + 2).trim();
+             commentStart = false; }
             }
-            if (commentStart(currLine)) { commentStart = true;            }
-            if (isSourceCodeLine(currLine)) numOfSrcLns++;
+             if (commentStart(currLine)) { commentStart = true; }
         }
-        totalCmts += numOfCmts; totalSrcLns += numOfSrcLns;
+        return numOfCmts;
+        //totalCmts += numOfCmts; totalSrcLns += numOfSrcLns;
     }
 
     public boolean commentStart(String line){
@@ -212,11 +231,11 @@ class CodeReader{
                 }
             }
         }
-        return isSourceCode;
+        return false;
     }
 
-    public void setNumOfCmts(long newNum) { this.numOfCmts = newNum;}
-    public void setNumOfSrcLngs(long newNum) { this.numOfSrcLns = newNum;}
+   // public void setNumOfCmts(long newNum) { this.numOfCmts = newNum;}
+   // public void setNumOfSrcLngs(long newNum) { this.numOfSrcLns = newNum;}
     public long getNumOfCmts() { return numOfCmts;}
     public long getNumOfSrcLns() { return numOfSrcLns;}
     public long getTotalCmts() { return totalCmts; }
@@ -251,10 +270,13 @@ public class Metrics implements IMetrics{
     public int numLines;
     public int numWords;
     public int numChars;
+    public int numSrcLines;
+    public int numOfCmts;
     public int totalLines;
     public int totalWords;
     public int totalChars;
     public String currentFile;
+    public File currFile;
 
     public Metrics() {}
 
@@ -277,15 +299,17 @@ public class Metrics implements IMetrics{
                 numLines = getLineCount();
                 numWords = getWordCount();
                 numChars = getCharacterCount();
+                numSrcLines = getSourceLineCount();
+                numOfCmts = getCommentLineCount();
                 //lineCount(temp);
                 //wordAndCharCount(temp);
                 //if (getExtension(temp)){
-                    codeIn.readLines(temp);
+                    //codeIn.readLines(temp);
                     hal.runHal(temp);
                // }
                 printStats(temp, codeIn, hal, headerTrigger);
                 numLines = numWords = numChars = 0;
-                codeIn.setNumOfCmts(0); codeIn.setNumOfSrcLngs(0);
+                //codeIn.setNumOfCmts(0); codeIn.setNumOfSrcLngs(0);
                 headerTrigger = false;
             }
             if(inFiles.size() > 1) printTotals(codeIn);
@@ -332,6 +356,24 @@ public class Metrics implements IMetrics{
             }
             return charCount;
         } catch(Exception e) { e.printStackTrace(); }
+        return 0;
+    }
+
+    @Override
+    public int getSourceLineCount() {
+        try {
+            CodeReader codeIn = new CodeReader();
+            return codeIn.readSrcLines(currFile);
+        } catch (Exception e) { e.printStackTrace(); }
+        return 0;
+    }
+
+    @Override
+    public int getCommentLineCount() {
+        try {
+            CodeReader codeIn = new CodeReader();
+            return codeIn.readCmtLines(currFile);
+        } catch (Exception e) { e.printStackTrace(); }
         return 0;
     }
 
