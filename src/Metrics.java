@@ -336,7 +336,6 @@ public class Metrics implements IMetrics{
     }
 
     /*
-
     public void wordAndCharCount(File currFile) throws Exception{
         BufferedReader wordReader = new BufferedReader(new FileReader(currFile));
         String lineHolder;
@@ -350,7 +349,6 @@ public class Metrics implements IMetrics{
         totalChars += numChars;
         totalWords += numWords;
     }
-
     */
 
     @Override
