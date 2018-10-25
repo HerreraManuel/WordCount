@@ -247,14 +247,14 @@ class CodeReader{
                 "SLOC is determined by: Nguyen, Vu et al. \"A SLOC Counting Standard.\" (2007).\n",
         sortOptions = false)
 
-public class Metrics {
-    public long numLines;
-    public long numWords;
-    public long numChars;
-    public long totalLines;
-    public long totalWords;
-    public long totalChars;
-    public String fileExt;
+public class Metrics implements IMetrics{
+    public int numLines;
+    public int numWords;
+    public int numChars;
+    public int totalLines;
+    public int totalWords;
+    public int totalChars;
+    public String currentFile;
 
     public Metrics() {}
 
@@ -273,7 +273,10 @@ public class Metrics {
             CodeReader codeIn = new CodeReader();
             boolean headerTrigger = true;
             for (File temp : inFiles) {
-                lineCount(temp);
+                numLines = getLineCount();
+                numWords = getWordCount();
+                numChars = getCharacterCount();
+                //lineCount(temp);
                 wordAndCharCount(temp);
                 //if (getExtension(temp)){
                     codeIn.readLines(temp);
@@ -288,10 +291,47 @@ public class Metrics {
         }catch (IOException e) { e.printStackTrace(); }
     }
 
-    public void lineCount(File currFile) throws Exception{
-        BufferedReader reader = new BufferedReader(new FileReader(currFile));
-        //numLines = reader.lines().count();
-        totalLines += numLines;
+    @Override
+    public int getLineCount() {
+        try {
+            Long numOfLines;
+            BufferedReader reader = new BufferedReader(new FileReader(currentFile));
+            numOfLines = reader.lines().count();
+            totalLines += numLines;
+            return numOfLines.intValue();
+        } catch (IOException e) {e.printStackTrace();}
+        return 0;
+    }
+
+    @Override
+    public int getWordCount() {
+        try {
+            BufferedReader wordReader = new BufferedReader(new FileReader(currentFile));
+            String lineHolder;
+            int numOfWords = 0;
+            while ((lineHolder = wordReader.readLine()) != null) {
+                if (!lineHolder.isEmpty()) {
+                    String[] lineOfWords = lineHolder.trim().split("\\s+");
+                    numOfWords += lineOfWords.length;
+                }
+            }
+            return numOfWords;
+        } catch(Exception e) { e.printStackTrace(); }
+        return 0;
+    }
+
+    @Override
+    public int getCharacterCount() {
+        try {
+            BufferedReader wordReader = new BufferedReader(new FileReader(currentFile));
+            String lineHolder;
+            int charCount = 0;
+            while ((lineHolder = wordReader.readLine()) != null) {
+                charCount += lineHolder.length();
+            }
+            return charCount;
+        } catch(Exception e) { e.printStackTrace(); }
+        return 0;
     }
 
     public void wordAndCharCount(File currFile) throws Exception{
@@ -308,10 +348,11 @@ public class Metrics {
         totalWords += numWords;
     }
 
-    public boolean getExtension(File tempFile){
-        fileExt = tempFile.getName().substring(tempFile.getName().indexOf("."));
-        if (fileExt.equals(".java") || fileExt.equals(".c") || fileExt.equals(".h") ||
-                fileExt.equals(".cpp") || fileExt.equals(".hpp")) return true;
+    @Override
+    public boolean isSource(){
+        currentFile = currentFile.substring(currentFile.lastIndexOf("."));
+        if (currentFile.equals(".java") || currentFile.equals(".c") || currentFile.equals(".h") ||
+                currentFile.equals(".cpp") || currentFile.equals(".hpp")) return true;
         return false;
     }
 
