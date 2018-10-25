@@ -273,11 +273,12 @@ public class Metrics implements IMetrics{
             CodeReader codeIn = new CodeReader();
             boolean headerTrigger = true;
             for (File temp : inFiles) {
+                currentFile = temp.getName();
                 numLines = getLineCount();
                 numWords = getWordCount();
                 numChars = getCharacterCount();
                 //lineCount(temp);
-                wordAndCharCount(temp);
+                //wordAndCharCount(temp);
                 //if (getExtension(temp)){
                     codeIn.readLines(temp);
                     hal.runHal(temp);
@@ -334,6 +335,8 @@ public class Metrics implements IMetrics{
         return 0;
     }
 
+    /*
+
     public void wordAndCharCount(File currFile) throws Exception{
         BufferedReader wordReader = new BufferedReader(new FileReader(currFile));
         String lineHolder;
@@ -347,6 +350,8 @@ public class Metrics implements IMetrics{
         totalChars += numChars;
         totalWords += numWords;
     }
+
+    */
 
     @Override
     public boolean isSource(){
