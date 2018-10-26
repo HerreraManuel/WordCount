@@ -59,8 +59,13 @@ class DistinctCode{
      public double progEffort;
      public double progTimeReq;
      public double progDelivBugs;
+     public File fileName;
 
-    void runHal(File inFile) throws Exception{
+    void runHal(File inFile, int distOperators, int distOperands, int tOperators, int tOperands) throws Exception{
+        numOfDistinctOperands = distOperands;
+        numOfDistinctOperators = distOperators;
+        totalOperators = tOperators;
+        totalOperands = tOperands;
         progVocab = 0;
         progLen = 0;
         calProgLen = 0;
@@ -76,6 +81,8 @@ class DistinctCode{
         vocab(); length(); calLen(); vol(); diff();
         effort(); timeReq(); bugs();
     }
+
+    void setFileName(File fName) {fileName = fName;}
 
     void vocab() { progVocab = numOfDistinctOperators + numOfDistinctOperands;}
 
@@ -142,15 +149,6 @@ class DistinctCode{
 
     boolean inOperandList(String word) { return operandHolder.contains(word);} //operandHolder.stream().anyMatch(word::equals); }
 
-    void printMetrics() {
-        System.out.printf("%-10d %-10d %-10.2f %-10.2f %-10.2f %-10.2f %-10.2f %-10.2f",
-                progVocab, progLen, calProgLen, progVol, progDiff, progEffort, progTimeReq, progDelivBugs);
-    }
-
-    void printHalsteadHeader() {
-        System.out.printf("%-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s",
-                "Vocab", "Lgth", "CalLen", "Vol", "Diff", "Effort", "T Req", "Bugs");
-    }
 }
 
 class CodeReader {
@@ -300,13 +298,13 @@ public class Metrics implements IMetrics{
     @Option(names = "-H", description = "Print Halstead metrics") boolean halStat;
     @Option(names = {"-h", "--help"}, usageHelp = true,  description = "Display this help and exit") boolean help;
 
-    public void run(List<File> inFiles) throws Exception {
+    public void run(List<File> inFiles) {
         try {
-            HalsteadCounts hal = new HalsteadCounts();
             CodeReader codeIn = new CodeReader();
             boolean headerTrigger = true;
             for (File temp : inFiles) {
-                currentFile = temp.getName();
+                if(setPath(temp.getName())) { currentFile = temp.getName(); }
+                in.setFileName(temp);
                 numLines = getLineCount();
                 numWords = getWordCount();
                 numChars = getCharacterCount();
@@ -316,6 +314,7 @@ public class Metrics implements IMetrics{
                 n2 = getHalsteadn2();
                 N1 = getHalsteadN1();
                 N2 = getHalsteadN2();
+                in.runHal(temp, n1, n2, N1, N2);
                 halVocab = getHalsteadVocabulary();
                 halProgLen = getHalsteadProgramLength();
                 halCalProgLen = getHalsteadCalculatedProgramLenght();
@@ -324,17 +323,19 @@ public class Metrics implements IMetrics{
                 halEffort = getHalsteadEffort();
                 halTime = getHalsteadTime();
                 halBugs = getHalsteadBugs();
-                //if (getExtension(temp)){
-                    //codeIn.readLines(temp);
-                    hal.runHal(temp);
-               // }
-                printStats(temp, codeIn, hal, headerTrigger);
+                printStats(temp, codeIn, headerTrigger);
                 numLines = numWords = numChars = 0;
-                //codeIn.setNumOfCmts(0); codeIn.setNumOfSrcLngs(0);
                 headerTrigger = false;
             }
             if(inFiles.size() > 1) printTotals(codeIn);
-        }catch (IOException e) { e.printStackTrace(); }
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    @Override
+    public boolean setPath(String path) {
+        currFile = new File(path);
+        if (currFile.exists()) return true;
+        else return false;
     }
 
     @Override
@@ -478,6 +479,12 @@ public class Metrics implements IMetrics{
         return false;
     }
 
+    void printHalsteadMetrics() {
+        System.out.printf("%-10d %-10d %-10d %-10d %-10d %-10d %-10d %-10d",
+                halVocab, halProgLen, halCalProgLen, halVol, halDiff,
+                halEffort, halTime, halBugs);
+    }
+
     public void printTotals(CodeReader in) {
         if (lineStat) System.out.printf("%-10d", totalLines);
         if (wordStat) System.out.printf("%-10d", totalWords);
@@ -487,7 +494,7 @@ public class Metrics implements IMetrics{
         System.out.printf("%-10s", "total\n");
     }
 
-    public void printStats(File temp, CodeReader in, HalsteadCounts inHal, boolean trigger){
+    public void printStats(File temp, CodeReader in, boolean trigger){
         if (!lineStat && !wordStat && !charStat && !cmtStat && !srcLnStat)
             System.out.printf("%-5d %-5d %-8d %10s\n", numLines, numWords, numChars, temp.getName());
         else {
@@ -497,15 +504,16 @@ public class Metrics implements IMetrics{
                 if (charStat) System.out.printf("%-10s", "Chars");
                 if (cmtStat) System.out.printf("%-10s", "Cmmts");
                 if (srcLnStat) System.out.printf("%-10s", "SrcLines");
-                if (halStat) inHal.printHalsteadHeader();
+                if (halStat) { System.out.printf("%-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s",
+                        "Vocab", "Lgth", "CalLen", "Vol", "Diff", "Effort", "T Req", "Bugs"); }
                 System.out.printf("%8s", "File\n");
             }
             if (lineStat) System.out.printf("%-10d", numLines);
             if (wordStat) System.out.printf("%-10d", numWords);
             if (charStat) System.out.printf("%-10d", numChars);
-            if (cmtStat) System.out.printf("%-10d", in.getNumOfCmts());
-            if (srcLnStat) System.out.printf("%-10d", in.getNumOfSrcLns());
-            if (halStat) inHal.printMetrics();
+            if (cmtStat) System.out.printf("%-10d", numOfCmts); //in.getNumOfCmts());
+            if (srcLnStat) System.out.printf("%-10d", numSrcLines); //in.getNumOfSrcLns());
+            if (halStat) printHalsteadMetrics();
             System.out.printf("%9s\n", temp.getName());
         }
     }
