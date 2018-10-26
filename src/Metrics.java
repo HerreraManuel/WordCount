@@ -262,7 +262,7 @@ class CodeReader {
                 "SLOC is determined by: Nguyen, Vu et al. \"A SLOC Counting Standard.\" (2007).\n",
         sortOptions = false)
 
-public class Metrics implements IMetrics{
+class Metrics implements IMetrics{
     public int numLines;
     public int numWords;
     public int numChars;
@@ -517,7 +517,7 @@ public class Metrics implements IMetrics{
             System.out.printf("%9s\n", temp.getName());
         }
     }
-
+/*
     public static void main(String[] args){
         if (args.length < 1) CommandLine.usage(new Metrics(), System.out);
         else {
@@ -527,4 +527,5 @@ public class Metrics implements IMetrics{
             } catch (Exception e) { e.printStackTrace(); }
         }
     }
+    */
 }
